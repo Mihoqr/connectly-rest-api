@@ -16,7 +16,7 @@ This repository contains the security-enhanced version of the Connectly API, foc
 
 ### 3. Token-Based Authentication
 - **Status:** Verified ✅
-- **Details:** Access to protected resources (Posts/Comments) requires a valid `Authorization: Token <token_key>` header.
+- **Details:** Access to protected resources (Posts/Comments) requires a valid `Authorization: Token <7d6564191a2a2aba77012a4f49b01da4449d9287>` header.
 - **Proof:** Unauthorized requests return a `401 Unauthorized` response.
 
 ### 4. Role-Based Access Control (RBAC)
