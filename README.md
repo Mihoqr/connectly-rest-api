@@ -1,6 +1,6 @@
-# Connectly REST API - Milestone 1 (Full Implementation)
+# Connectly REST API - Milestone 1 and Milestone 2 (Full Implementation)
 
-This repository contains the complete implementation of Milestone 1 for the Connectly REST API. The project has been evolved from a basic CRUD setup to a secure, pattern-driven system designed for scalability and maintainability.
+This repository contains the complete implementation of Milestone 1 and Milestone 2 for the Connectly REST API. The project has been evolved from a basic CRUD setup to a secure, pattern-driven system designed for scalability and maintainability.
 
 ## Project Architecture
 The project structure has been refactored into a "flattened" modular layout to improve accessibility and follow industry best practices:
@@ -26,11 +26,22 @@ The project structure has been refactored into a "flattened" modular layout to i
 * Robust endpoints for User registration, Authentication, and Post management.
 * Detailed validation for all incoming JSON requests.
 
-##  Postman Validation
+### Postman Validation
 The API has been fully verified using Postman with the following test suite:
 1. **User Auth**: Register -> Login -> Token Retrieval.
 2. **Factory Pass**: Successfully created Image/Video posts with correct metadata.
 3. **Validation Fail**: Correctly caught `400 Bad Request` errors when required metadata fields were missing.
+
+### Integrating Third-Party Services 
+	•	Client secrets are not stored in the repository.
+	•	Google OAuth credentials are managed securely in Google Cloud Console.
+	•	Sensitive information is excluded from version control.
+
+This project was developed collaboratively by the team.
+
+AI tools (including ChatGPT) were used as a learning assistant to:
+- Clarify OAuth integration steps
+
 
 <https://drive.google.com/drive/folders/17-shjiSjsrdfu2VWXNm7dRurJkm0SRZN?usp=sharing>
 
