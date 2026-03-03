@@ -146,6 +146,7 @@ erDiagram
         datetime created_at
         string unique_constraint "user_id, post_id"
     }
+```
 
 
 ## CRUD Operations Flow
