@@ -209,3 +209,36 @@ flowchart TD
     L --> R
 ```
 
+## 🏗️ System Architecture Diagram
+
+```mermaid
+flowchart LR
+
+    Client[Client / Postman]
+
+    subgraph Django REST API
+        Auth[Token Authentication]
+        Views[API Views]
+        Serializer[Serializers]
+        Factory[PostFactory]
+        Singleton[Singleton Services<br/>ConfigManager & Logger]
+        Pagination[Pagination Logic]
+        Sorting[Sorting by -created_at]
+    end
+
+    DB[(SQLite Database)]
+
+    Client -->|HTTP Requests| Auth
+    Auth --> Views
+    Views --> Serializer
+    Serializer --> Factory
+    Views --> Sorting
+    Views --> Pagination
+    Factory --> DB
+    Views --> DB
+    Singleton --> Views
+
+    DB -->|JSON Response| Views
+    Views --> Client
+```
+
