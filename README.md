@@ -26,6 +26,55 @@ The project structure has been refactored into a "flattened" modular layout to i
 * Robust endpoints for User registration, Authentication, and Post management.
 * Detailed validation for all incoming JSON requests.
 
+### 4. User Interactions (Like and Comment) 
+### Like Functionality
+Users can now like posts. Each user is only allowed to like a specific post once.  
+The system prevents duplicate likes and returns proper error responses if:
+- The post does not exist (404)
+- The user already liked the post (400)
+
+Endpoint:
+POST /posts/{id}/like/
+
+### Comment Functionality
+Users can now add comments to posts and retrieve comments per post.  
+Each comment is automatically linked to:
+- The logged-in user
+- The specific post (via URL parameter)
+
+Endpoints:
+POST /posts/{id}/comment/
+GET /posts/{id}/comments/
+
+Validation ensures:
+- Comments cannot be added to non-existent posts
+- Proper error handling is returned when needed
+
+---
+
+### Like & Comment Count
+The post detail endpoint was updated to include:
+- like_count
+- comment_count
+
+This allows clients to easily see how many likes and comments a post has.
+
+---
+
+### Google OAuth Login
+Integrated Google OAuth to allow users to log in using their Google account.
+
+Endpoint:
+POST /auth/google/login/
+
+The backend:
+1. Verifies the Google ID token
+2. Extracts the user email
+3. Creates a user if not existing
+4. Generates a DRF authentication token
+
+Proper error handling is included for invalid or expired tokens.
+
 ### Postman Validation
 The API has been fully verified using Postman with the following test suite:
 1. **User Auth**: Register -> Login -> Token Retrieval.
