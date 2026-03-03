@@ -61,7 +61,7 @@ This allows clients to easily see how many likes and comments a post has.
 
 ---
 
-### Google OAuth Login
+### 5. Integrating Third-Party Services (Google OAuth Login)
 Integrated Google OAuth to allow users to log in using their Google account.
 
 Endpoint:
@@ -74,6 +74,36 @@ The backend:
 4. Generates a DRF authentication token
 
 Proper error handling is included for invalid or expired tokens.
+
+### 6. News Feed 
+### Endpoint: GET /posts/feed/
+
+This endpoint retrieves posts sorted by newest first and applies pagination.
+
+Features:
+- Requires Token Authentication
+- Sorted by `created_at` (descending)
+- Pagination enabled (default page size = 5)
+- Handles invalid page requests gracefully
+
+### Example Successful Response
+
+```json
+{
+    "count": 4,
+    "next": null,
+    "previous": null,
+    "results": [...]
+}
+```
+
+### Example Error Response
+
+```json
+{
+    "detail": "Invalid page."
+}
+```
 
 ### Postman Validation
 The API has been fully verified using Postman with the following test suite:
@@ -155,18 +185,27 @@ erDiagram
 flowchart TD
     A[User Registers] --> B[User Logs In]
     B --> C[API Returns Auth Token]
+
     C --> D[Create Post]
     D --> E[Post Stored in Database]
+
     C --> F[Like Post]
     F --> G{Already Liked?}
     G -->|No| H[Save Like]
     G -->|Yes| I[Return 400 Error]
+
     C --> J[Comment on Post]
     J --> K{Post Exists?}
     K -->|Yes| L[Save Comment]
     K -->|No| M[Return 400 Error]
-    E --> N[Retrieve Post Details]
-    H --> N
-    L --> N
+
+    C --> O[GET /posts/feed/]
+    O --> P[Sort by -created_at]
+    P --> Q[Apply Pagination]
+    Q --> R[Return Paginated Feed]
+
+    E --> R
+    H --> R
+    L --> R
 ```
 
