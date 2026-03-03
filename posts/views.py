@@ -8,13 +8,14 @@ from django.contrib.auth import authenticate
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework import generics
 
+
 # Imports: Token Authentication
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token 
 from rest_framework.permissions import IsAuthenticated, BasePermission, AllowAny 
 
 # Imports
-from .models import Post, Comment
+from .models import Post, Comment, Like
 from .serializers import UserSerializer, PostSerializer, CommentSerializer
 
 # --- DESIGN PATTERN IMPORTS ---
@@ -133,22 +134,25 @@ class PostListCreate(APIView):
 # --- UPDATED DETAIL VIEW --- 
 class PostDetailView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsPostAuthor]
-
-    def get_object(self, pk):
-        try:
-            return Post.objects.get(pk=pk)
-        except Post.DoesNotExist:
-            return None
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        post = self.get_object(pk)
-        if post is None:
-            return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        self.check_object_permissions(request, post)
+        try:
+            post = Post.objects.get(pk=pk)
+        except Post.DoesNotExist:
+            return Response(
+                {"error": "Post not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         serializer = PostSerializer(post)
-        return Response(serializer.data)
+        data = serializer.data
+
+        # 🔥 Add these two lines
+        data["like_count"] = Like.objects.filter(post=post).count()
+        data["comment_count"] = Comment.objects.filter(post=post).count()
+
+        return Response(data)
 
     def delete(self, request, pk):
         post = self.get_object(pk)
@@ -160,21 +164,44 @@ class PostDetailView(APIView):
         post.delete()
         return Response({"message": "Post deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
 
-# --- UPDATED COMMENT VIEW ---
-@method_decorator(csrf_exempt, name='dispatch')
+# --- UPDATED COMMENT VIEW ---@method_decorator(csrf_exempt, name='dispatch')
 class CommentListCreate(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        comments = Comment.objects.all()
+    def get(self, request, pk):
+        comments = Comment.objects.filter(post_id=pk)
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
 
-    def post(self, request):
-        serializer = CommentSerializer(data=request.data)
+    def post(self, request, pk):
+        data = request.data.copy()
+        data["post"] = pk
+        data["author"] = request.user.id
+
+        serializer = CommentSerializer(data=data)
+
         if serializer.is_valid():
-            # Dito natin sinisigurado na ang author ng comment ay ang logged-in user
-            serializer.save(author=request.user)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@method_decorator(csrf_exempt, name='dispatch')
+class LikePostView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        # pk = post id
+        try:
+            post = Post.objects.get(pk=pk)
+        except Post.DoesNotExist:
+            return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # create like (prevent multiple likes because unique_together)
+        try:
+            Like.objects.create(user=request.user, post=post)
+            return Response({"message": "Post liked!"}, status=status.HTTP_201_CREATED)
+        except Exception:
+            # most likely already liked
+            return Response({"error": "You already liked this post."}, status=status.HTTP_400_BAD_REQUEST)

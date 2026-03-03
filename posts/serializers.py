@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User 
-from .models import Post, Comment
+from .models import Post, Comment, Like
 
 class UserSerializer(serializers.ModelSerializer):
     # Idagdag ang password field at gawin itong write_only para hindi makita sa GET requests
@@ -41,3 +41,9 @@ class CommentSerializer(serializers.ModelSerializer):
         if not User.objects.filter(id=value.id).exists():
             raise serializers.ValidationError("Author not found.")
         return value
+    
+# --- NEW: LikeSerializer ---
+    class LikeSerializer(serializers.ModelSerializer):
+     class Meta:
+        model = Like
+        fields = ['id', 'user', 'post', 'created_at']
