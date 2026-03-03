@@ -32,6 +32,8 @@ The API has been fully verified using Postman with the following test suite:
 2. **Factory Pass**: Successfully created Image/Video posts with correct metadata.
 3. **Validation Fail**: Correctly caught `400 Bad Request` errors when required metadata fields were missing.
 
+<https://drive.google.com/drive/folders/17-shjiSjsrdfu2VWXNm7dRurJkm0SRZN?usp=sharing>
+
 ##  Setup and Installation
 
 1. **Activate Virtual Environment**:
