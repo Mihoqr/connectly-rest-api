@@ -21,6 +21,13 @@ from .serializers import UserSerializer, PostSerializer, CommentSerializer
 # --- DESIGN PATTERN IMPORTS ---
 from singletons.logger_singleton import LoggerSingleton 
 
+#For Integrating Third Party Services
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
+
+
 # Initialize Singleton Logger
 logger = LoggerSingleton().get_logger() 
 
@@ -205,3 +212,54 @@ class LikePostView(APIView):
         except Exception:
             # most likely already liked
             return Response({"error": "You already liked this post."}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class GoogleLoginView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        google_id_token = request.data.get("id_token")
+
+        if not google_id_token:
+            return Response(
+                {"error": "id_token is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Verify token with Google
+            idinfo = id_token.verify_oauth2_token(
+                google_id_token,
+                google_requests.Request()
+            )
+
+            email = idinfo.get("email")
+
+            if not email:
+                return Response(
+                    {"error": "Email not found in token."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create or get user
+            user, created = User.objects.get_or_create(
+                username=email.split("@")[0],
+                defaults={"email": email}
+            )
+
+            # Create or get DRF token
+            token, _ = Token.objects.get_or_create(user=user)
+
+            return Response({
+                "token": token.key,
+                "user_id": user.id,
+                "username": user.username,
+                "email": user.email
+            })
+
+        except ValueError:
+            return Response(
+                {"error": "Invalid or expired Google token."},
+                status=status.HTTP_401_UNAUTHORIZED
+            )      
