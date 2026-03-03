@@ -279,7 +279,7 @@ graph TB
     style Storage fill:#ede7f6
 ```
 
-## API Request Lifecycle Sequence Diagram
+## API Request/Response Flow
 
 ```mermaid
 sequenceDiagram
