@@ -76,6 +76,8 @@ The backend:
 Proper error handling is included for invalid or expired tokens.
 
 ### 6. News Feed 
+The News Feed displays all posts created by users in the system. It shows the newest posts first and allows users to view content shared by others.
+
 ### Endpoint: GET /posts/feed/
 
 This endpoint retrieves posts sorted by newest first and applies pagination.
@@ -124,12 +126,6 @@ AI tools (including ChatGPT) were used as a learning assistant to:
 
 ## Link For Design Patterns
 <https://drive.google.com/drive/folders/17-shjiSjsrdfu2VWXNm7dRurJkm0SRZN?usp=sharing>
-
-##  Setup and Installation
-
-1. **Activate Virtual Environment**:
-   ```bash
-   source env/Scripts/activate
 
 
 ## Diagrams
@@ -374,3 +370,32 @@ sequenceDiagram
         API-->>Client: 200 OK + DRF Token
     end
 ```
+
+
+## 🚀 Setup Instructions
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd connectly_project
+
+### 2. Create Virtual Environment
+
+Windows
+python -m venv env
+env\Scripts\activate
+
+Mac/Linux
+python3 -m venv env
+source env/bin/activate
+
+### 3. Applying Migrations
+python manage.py makemigrations
+python manage.py migrate
+
+### 4. Run Development Server
+python manage.py runserver
+
+### 5. Server URL
+The development will run at: http://127.0.0.1:8000/
