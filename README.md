@@ -91,6 +91,17 @@ This project was developed collaboratively by the team.
 AI tools (including ChatGPT) were used as a learning assistant to:
 - Clarify OAuth integration steps
 
+
+## Link For Design Patterns
+<https://drive.google.com/drive/folders/17-shjiSjsrdfu2VWXNm7dRurJkm0SRZN?usp=sharing>
+
+##  Setup and Installation
+
+1. **Activate Virtual Environment**:
+   ```bash
+   source env/Scripts/activate
+
+
 ## Diagrams
 
 ## Entity Relationship Diagram
@@ -136,10 +147,6 @@ erDiagram
         string unique_constraint "user_id, post_id"
     }
 
-<https://drive.google.com/drive/folders/17-shjiSjsrdfu2VWXNm7dRurJkm0SRZN?usp=sharing>
 
-##  Setup and Installation
 
-1. **Activate Virtual Environment**:
-   ```bash
-   source env/Scripts/activate
+
