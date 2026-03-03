@@ -375,14 +375,10 @@ sequenceDiagram
 ## 🚀 Setup Instructions
 
 ### 1. Clone the Repository
-
-```bash
 git clone <repository-url>
 cd connectly_project
 
 ### 2. Create Virtual Environment
-
-Windows
 python -m venv env
 env\Scripts\activate
 
