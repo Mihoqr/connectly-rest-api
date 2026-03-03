@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework import generics
+from rest_framework.pagination import PageNumberPagination
 
 
 # Imports: Token Authentication
@@ -262,4 +263,19 @@ class GoogleLoginView(APIView):
             return Response(
                 {"error": "Invalid or expired Google token."},
                 status=status.HTTP_401_UNAUTHORIZED
-            )      
+            )    
+
+class FeedView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        posts = Post.objects.all().order_by('-created_at')
+
+        paginator = PageNumberPagination()
+        paginator.page_size = 5
+
+        result_page = paginator.paginate_queryset(posts, request)
+        serializer = PostSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)  
