@@ -134,7 +134,7 @@ AI tools (including ChatGPT) were used as a learning assistant to:
 
 ## Diagrams
 
-## Entity Relationship Diagram
+## 1. Entity Relationship Diagram
 ```mermaid
 erDiagram
     USER ||--o{ POST : creates
@@ -179,7 +179,7 @@ erDiagram
 ```
 
 
-## CRUD Operations Flow
+## 2. CRUD Operations Flow
 
 ```mermaid
 flowchart TD
@@ -209,7 +209,7 @@ flowchart TD
     L --> R
 ```
 
-## System Architecture Diagram
+## 3. System Architecture Diagram
 
 ```mermaid
 graph TB
@@ -279,7 +279,7 @@ graph TB
     style Storage fill:#ede7f6
 ```
 
-## API Request/Response Flow
+## 4. API Request/Response Flow
 
 ```mermaid
 sequenceDiagram
@@ -331,7 +331,7 @@ sequenceDiagram
 ```
 
 
-## Google OAuth Login Flow
+## 5. Google OAuth Login Flow
 
 ```mermaid
 sequenceDiagram
