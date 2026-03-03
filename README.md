@@ -329,3 +329,48 @@ sequenceDiagram
         end
     end
 ```
+
+
+## Google OAuth Login Flow
+
+```mermaid
+sequenceDiagram
+    participant Client as Client / Postman
+    participant Google as Google OAuth Server
+    participant API as Django API
+    participant GoogleLib as google-auth Library
+    participant UserModel as User Model
+    participant DB as SQLite Database
+    participant Token as DRF Token System
+
+    Client->>Google: Request Authorization Code
+    Google-->>Client: Authorization Code
+
+    Client->>Google: Exchange Code for Tokens
+    Google-->>Client: id_token + access_token
+
+    Client->>API: POST /auth/google/login<br/>with id_token
+
+    API->>GoogleLib: Verify id_token
+    alt Invalid or Expired Token
+        GoogleLib-->>API: Verification Failed
+        API-->>Client: 400 Invalid Token
+    else Valid Token
+        GoogleLib-->>API: Decoded User Info (email, name)
+
+        API->>UserModel: Check if User Exists
+        alt User Not Found
+            UserModel->>DB: Create New User
+        else User Exists
+            UserModel->>DB: Retrieve User
+        end
+
+        DB-->>UserModel: User Object
+
+        API->>Token: Generate or Retrieve Auth Token
+        Token->>DB: Store/Retrieve Token
+        DB-->>Token: Token Value
+
+        API-->>Client: 200 OK + DRF Token
+    end
+```
