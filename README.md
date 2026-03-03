@@ -1,36 +1,42 @@
-# Enhancing API Security (Connectly Project)
+# Connectly API - Enhancing the API with Design Patterns
 
-This repository contains the security-enhanced version of the Connectly API, focusing on data protection, secure transmission, and role-based access control.
+This repository contains the enhanced version of the Connectly API, focusing on the implementation of **Singleton** and **Factory** design patterns to improve code modularity, scalability, and maintainability.
 
-## 🚀 Verified Security Features
+## 🛠️ Design Patterns Implemented
 
-### 1. Data Encryption (Password Hashing)
-- **Status:** Verified ✅
-- **Details:** User passwords are never stored in plain text. We utilize Django's `pbkdf2_sha256` hashing algorithm.
-- **Proof:** Verified via terminal shell where `print(user.password)` returns a hashed string.
+### 1. Singleton Pattern
+We used the Singleton pattern to ensure that specific classes have only one instance and provide a global point of access to them.
+* **ConfigManager**: Centralizes all API configurations (e.g., pagination settings, rate limits) to ensure consistency across the application.
+* **LoggerSingleton**: A centralized logging utility used for tracking API initializations and recording errors during the post-creation process.
 
-### 2. Secure Data Transmission (HTTPS)
-- **Status:** Verified ✅
-- **Details:** The API is configured to run over HTTPS to ensure that all data exchanged between the client (Postman) and server is encrypted in transit.
-- **Proof:** All API endpoints are accessed via `https://127.0.0.1:8000/`.
+### 2. Factory Pattern
+The Factory pattern was implemented to standardize the creation of `Post` objects.
+* **PostFactory**: A dedicated class responsible for instantiating different post types (Text, Image, Video).
+* **Validation Logic**: Enforces specific metadata requirements during object creation:
+    * **Image Posts**: Requires `file_size` in the metadata.
+    * **Video Posts**: Requires `duration` in the metadata.
 
-### 3. Token-Based Authentication
-- **Status:** Verified ✅
-- **Details:** Access to protected resources (Posts/Comments) requires a valid `Authorization: Token <7d6564191a2a2aba77012a4f49b01da4449d9287>` header.
-- **Proof:** Unauthorized requests return a `401 Unauthorized` response.
+## 📂 Structural Changes
+To improve project organization, the directory structure has been flattened:
+* `/factories`: Contains `post_factory.py`.
+* `/singletons`: Contains `config_manager.py` and `logger_singleton.py`.
+* Root Directory: Main Django configuration and app files for easier access.
 
-### 4. Role-Based Access Control (RBAC)
-- **Status:** Verified ✅
-- **Details:** Implemented custom permissions (`IsPostAuthor`) to ensure that only the creator of a post can edit or delete it.
-- **Proof:** Attempting to delete a post owned by another user returns a `403 Forbidden` status.
+## 🧪 Testing and Validation (Postman)
+The Factory logic and API endpoints were validated using Postman. Below are the test scenarios conducted:
 
-## 🛠️ How to Test
-1. **Clone the repository** and navigate to the `api-security-branch`.
-2. **Activate the virtual environment** and run the server.
-3. **Use the provided Postman Collection** (found in the Google Drive submission) to run the following tests:
-   - `POST /posts/users/` (Create User)
-   - `POST /api-token-auth/` (Obtain Token)
-   - `DELETE /posts/posts/<id>/` (Test RBAC - expect 403 if not author)
+| Scenario | Post Type | Metadata Status | Expected Result | Status Code |
+| :--- | :--- | :--- | :--- | :--- |
+| **Pass** | Image | `{"file_size": "2MB"}` | Post created successfully | `201 Created` |
+| **Pass** | Video | `{"duration": "05:00"}` | Post created successfully | `201 Created` |
+| **Fail** | Image | Missing `file_size` | Error: Image posts require file_size | `400 Bad Request` |
+| **Fail** | Video | Missing `duration` | Error: Video posts require duration | `400 Bad Request` |
 
----
-*Developed as part of the Web Development Frameworks course.*
+
+
+## 🚀 Getting Started
+
+1. **Clone and Navigate**:
+   ```bash
+   git clone <https://github.com/Mihoqr/connectly-rest-api.git>
+   cd Connectly_Final_Rebuild
