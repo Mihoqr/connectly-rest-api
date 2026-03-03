@@ -148,5 +148,24 @@ erDiagram
     }
 
 
+## CRUD Operations Flow
 
+```mermaid
+flowchart TD
+    A[User Registers] --> B[User Logs In]
+    B --> C[API Returns Auth Token]
+    C --> D[Create Post]
+    D --> E[Post Stored in Database]
+    C --> F[Like Post]
+    F --> G{Already Liked?}
+    G -->|No| H[Save Like]
+    G -->|Yes| I[Return 400 Error]
+    C --> J[Comment on Post]
+    J --> K{Post Exists?}
+    K -->|Yes| L[Save Comment]
+    K -->|No| M[Return 400 Error]
+    E --> N[Retrieve Post Details]
+    H --> N
+    L --> N
+```
 
