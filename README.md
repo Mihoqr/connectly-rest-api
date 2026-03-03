@@ -209,36 +209,72 @@ flowchart TD
     L --> R
 ```
 
-## 🏗️ System Architecture Diagram
+## System Architecture Diagram
 
 ```mermaid
-flowchart LR
-
-    Client[Client / Postman]
-
-    subgraph Django REST API
-        Auth[Token Authentication]
-        Views[API Views]
-        Serializer[Serializers]
-        Factory[PostFactory]
-        Singleton[Singleton Services<br/>ConfigManager & Logger]
-        Pagination[Pagination Logic]
-        Sorting[Sorting by -created_at]
+graph TB
+    subgraph Client["Client Layer"]
+        Postman["Postman / Frontend Client"]
     end
 
-    DB[(SQLite Database)]
+    subgraph API["API Layer"]
+        Router["URL Router<br/>connectly_project/urls.py"]
+        Views["API Views<br/>posts/views.py"]
+    end
 
-    Client -->|HTTP Requests| Auth
-    Auth --> Views
-    Views --> Serializer
-    Serializer --> Factory
-    Views --> Sorting
-    Views --> Pagination
-    Factory --> DB
-    Views --> DB
-    Singleton --> Views
+    subgraph Auth["Authentication & Authorization"]
+        TokenAuth["TokenAuthentication"]
+        Permissions["IsAuthenticated"]
+        GoogleOAuth["Google OAuth Login"]
+    end
 
-    DB -->|JSON Response| Views
-    Views --> Client
+    subgraph Processing["Data Processing"]
+        Serializers["Serializers<br/>posts/serializers.py"]
+        Factory["PostFactory<br/>Factory Pattern"]
+        Pagination["Pagination<br/>PageNumberPagination"]
+        Sorting["Sorting Logic<br/>order_by(-created_at)"]
+    end
+
+    subgraph Models["Data Models"]
+        ModelLayer["User, Post, Comment, Like<br/>posts/models.py"]
+    end
+
+    subgraph Utils["Utilities"]
+        Logger["LoggerSingleton"]
+        Config["ConfigManager"]
+    end
+
+    subgraph Storage["Storage Layer"]
+        DB["SQLite Database<br/>db.sqlite3"]
+    end
+
+    Postman -->|HTTP Request| Router
+    Router -->|Route Request| Views
+
+    Views -->|Authenticate| TokenAuth
+    Views -->|Permission Check| Permissions
+    Views -->|Google Login| GoogleOAuth
+
+    Views -->|Validate Data| Serializers
+    Views -->|Create Post| Factory
+
+    Views -->|Apply Sorting| Sorting
+    Views -->|Apply Pagination| Pagination
+
+    Serializers -->|Interact| ModelLayer
+    Factory -->|Interact| ModelLayer
+    ModelLayer -->|Query & Persist| DB
+
+    Views -->|Log Events| Logger
+    Logger -->|Read Settings| Config
+
+    Views -->|JSON Response| Postman
+
+    style Client fill:#e1f5ff
+    style API fill:#f3e5f5
+    style Auth fill:#fff3e0
+    style Processing fill:#e8f5e9
+    style Models fill:#fce4ec
+    style Utils fill:#f1f8e9
+    style Storage fill:#ede7f6
 ```
-
