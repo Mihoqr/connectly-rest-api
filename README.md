@@ -278,3 +278,54 @@ graph TB
     style Utils fill:#f1f8e9
     style Storage fill:#ede7f6
 ```
+
+## API Request Lifecycle Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant Client as Client / Postman
+    participant Router as URL Router
+    participant View as Django View
+    participant Auth as TokenAuthentication
+    participant Perms as IsAuthenticated
+    participant Serializer as Serializer
+    participant Factory as PostFactory
+    participant Model as Models (User, Post, Comment, Like)
+    participant DB as SQLite Database
+
+    Client->>Router: HTTP Request + Token
+    Router->>View: Route to View
+
+    View->>Auth: Validate Token
+    alt Token Invalid
+        Auth-->>Client: 401 Unauthorized
+    else Token Valid
+        Auth->>View: Authenticated User
+
+        View->>Perms: Check Permission
+        alt Permission Denied
+            Perms-->>Client: 403 Forbidden
+        else Permission Granted
+
+            View->>Serializer: Validate Request Data
+            alt Validation Fails
+                Serializer-->>Client: 400 Bad Request
+            else Validation Passes
+                Serializer->>View: Validated Data
+
+                alt Create Post
+                    View->>Factory: Create Post (Factory Pattern)
+                    Factory->>Model: Prepare Model Object
+                else Other CRUD / Feed
+                    View->>Model: Execute Business Logic
+                end
+
+                Model->>DB: Query / Insert / Update / Delete
+                DB-->>Model: Result
+                Model-->>View: Data Object
+
+                View-->>Client: 200 / 201 / 204 JSON Response
+            end
+        end
+    end
+```
