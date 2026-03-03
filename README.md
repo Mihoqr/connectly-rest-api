@@ -372,26 +372,37 @@ sequenceDiagram
 ```
 
 
-## 🚀 Setup Instructions
+## Setup Instructions
 
 ### 1. Clone the Repository
+```
 git clone <repository-url>
 cd connectly_project
+```
 
 ### 2. Create Virtual Environment
+```
 python -m venv env
 env\Scripts\activate
+```
 
 Mac/Linux
+```
 python3 -m venv env
 source env/bin/activate
+```
 
 ### 3. Applying Migrations
+```
 python manage.py makemigrations
 python manage.py migrate
+```
 
 ### 4. Run Development Server
+```
 python manage.py runserver
-
+```
 ### 5. Server URL
+```
 The development will run at: http://127.0.0.1:8000/
+```
