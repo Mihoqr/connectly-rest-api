@@ -94,8 +94,47 @@ AI tools (including ChatGPT) were used as a learning assistant to:
 ## Diagrams
 
 ## Entity Relationship Diagram
+```mermaid
+erDiagram
+    USER ||--o{ POST : creates
+    USER ||--o{ COMMENT : writes
+    USER ||--o{ LIKE : gives
+    POST ||--o{ COMMENT : receives
+    POST ||--o{ LIKE : receives
 
-![ER Diagram](er-diagram.png)
+    USER {
+        int id PK
+        string username UK
+        string email UK
+        string password
+        datetime date_joined
+    }
+
+    POST {
+        int id PK
+        string title
+        text content
+        string post_type
+        json metadata
+        int author_id FK
+        datetime created_at
+    }
+
+    COMMENT {
+        int id PK
+        text text
+        int author_id FK
+        int post_id FK
+        datetime created_at
+    }
+
+    LIKE {
+        int id PK
+        int user_id FK
+        int post_id FK
+        datetime created_at
+        string unique_constraint "user_id, post_id"
+    }
 
 <https://drive.google.com/drive/folders/17-shjiSjsrdfu2VWXNm7dRurJkm0SRZN?usp=sharing>
 
