@@ -173,7 +173,24 @@ erDiagram
         string unique_constraint "user_id, post_id"
     }
 ```
+### 1.1  Entity to API Endpoint Mapping
+### USER
+- POST /auth/register/
+- POST /auth/login/
+- POST /auth/google/login/
 
+### POST
+- POST /posts/
+- GET /posts/feed/
+- GET /posts/:id/
+- DELETE /posts/:id/
+
+### COMMENT
+- POST /posts/:id/comment/
+- GET /posts/:id/comments/
+
+### LIKE
+- POST /posts/:id/like/
 
 ## 2. CRUD Operations Flow
 
