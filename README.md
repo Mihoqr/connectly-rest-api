@@ -226,70 +226,102 @@ flowchart TD
 
 ```mermaid
 graph TB
-    subgraph Client["Client Layer"]
-        Postman["Postman / Frontend Client"]
-    end
 
+%% ================= CLIENT =================
+subgraph Client["Client Layer"]
+    ClientApp["Postman / Frontend Client"]
+end
+
+%% ================= SERVER =================
+subgraph Server["Django Application Server 127.0.0.1:8000"]
+
+    %% API LAYER
     subgraph API["API Layer"]
         Router["URL Router<br/>connectly_project/urls.py"]
+        Endpoints["API Endpoints<br/><br/>
+        AUTH:<br/>
+        POST /auth/register/<br/>
+        POST /auth/login/<br/>
+        POST /auth/google/login/<br/><br/>
+        POSTS:<br/>
+        POST /posts/<br/>
+        GET /posts/feed/<br/>
+        GET /posts/:id/<br/>
+        DELETE /posts/:id/<br/><br/>
+        COMMENTS:<br/>
+        POST /posts/:id/comment/<br/>
+        GET /posts/:id/comments/<br/><br/>
+        LIKES:<br/>
+        POST /posts/:id/like/"]
         Views["API Views<br/>posts/views.py"]
     end
 
+    %% AUTH
     subgraph Auth["Authentication & Authorization"]
         TokenAuth["TokenAuthentication"]
-        Permissions["IsAuthenticated"]
-        GoogleOAuth["Google OAuth Login"]
+        PermissionCheck["IsAuthenticated"]
+        GoogleOAuth["Google OAuth Verification<br/>google-auth library"]
     end
 
+    %% PROCESSING
     subgraph Processing["Data Processing"]
         Serializers["Serializers<br/>posts/serializers.py"]
-        Factory["PostFactory<br/>Factory Pattern"]
-        Pagination["Pagination<br/>PageNumberPagination"]
-        Sorting["Sorting Logic<br/>order_by(-created_at)"]
+        Factory["PostFactory - Factory Pattern"]
+        Pagination["PageNumberPagination"]
+        Sorting["order_by -created_at"]
     end
 
+    %% MODELS
     subgraph Models["Data Models"]
         ModelLayer["User, Post, Comment, Like<br/>posts/models.py"]
     end
 
+    %% UTILITIES
     subgraph Utils["Utilities"]
         Logger["LoggerSingleton"]
         Config["ConfigManager"]
     end
 
-    subgraph Storage["Storage Layer"]
-        DB["SQLite Database<br/>db.sqlite3"]
-    end
+end
 
-    Postman -->|HTTP Request| Router
-    Router -->|Route Request| Views
+%% ================= STORAGE =================
+subgraph Storage["Storage Layer"]
+    Database["SQLite Database<br/>db.sqlite3"]
+end
 
-    Views -->|Authenticate| TokenAuth
-    Views -->|Permission Check| Permissions
-    Views -->|Google Login| GoogleOAuth
 
-    Views -->|Validate Data| Serializers
-    Views -->|Create Post| Factory
+%% ================= FLOW =================
+ClientApp -->|HTTP Request to 127.0.0.1:8000| Router
+Router --> Endpoints
+Endpoints --> Views
 
-    Views -->|Apply Sorting| Sorting
-    Views -->|Apply Pagination| Pagination
+Views -->|Authenticate Token| TokenAuth
+Views -->|Permission Check| PermissionCheck
+Views -->|Google Login Flow| GoogleOAuth
 
-    Serializers -->|Interact| ModelLayer
-    Factory -->|Interact| ModelLayer
-    ModelLayer -->|Query & Persist| DB
+Views -->|Validate Data| Serializers
+Views -->|Create Post via Factory Pattern| Factory
+Views -->|Apply Sorting| Sorting
+Views -->|Apply Pagination| Pagination
 
-    Views -->|Log Events| Logger
-    Logger -->|Read Settings| Config
+Serializers --> ModelLayer
+Factory --> ModelLayer
+ModelLayer -->|Query and Persist| Database
 
-    Views -->|JSON Response| Postman
+Views -->|Log Events| Logger
+Logger -->|Read Settings| Config
 
-    style Client fill:#e1f5ff
-    style API fill:#f3e5f5
-    style Auth fill:#fff3e0
-    style Processing fill:#e8f5e9
-    style Models fill:#fce4ec
-    style Utils fill:#f1f8e9
-    style Storage fill:#ede7f6
+Views -->|JSON Response| ClientApp
+
+
+%% ================= COLORS =================
+style Client fill:#e3f2fd,stroke:#1e88e5,stroke-width:2px
+style API fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px
+style Auth fill:#fff3e0,stroke:#fb8c00,stroke-width:2px
+style Processing fill:#e8f5e9,stroke:#43a047,stroke-width:2px
+style Models fill:#fce4ec,stroke:#d81b60,stroke-width:2px
+style Utils fill:#f1f8e9,stroke:#7cb342,stroke-width:2px
+style Storage fill:#ede7f6,stroke:#5e35b1,stroke-width:2px
 ```
 
 ## 4. API Request/Response Flow
