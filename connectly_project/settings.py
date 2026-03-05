@@ -92,7 +92,7 @@ REST_FRAMEWORK = {
 }
 
 # ---Security settings from the manual ---
-# HTTPS is off for local dev para walang SSL errors
+# HTTPS is off to prevent SSL error
 SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
