@@ -214,7 +214,7 @@ class LikePostView(APIView):
             # most likely already liked
             return Response({"error": "You already liked this post."}, status=status.HTTP_400_BAD_REQUEST)
         
-
+#------Google Login (Authentication)---------
 class GoogleLoginView(APIView):
     authentication_classes = []
     permission_classes = []
@@ -265,6 +265,7 @@ class GoogleLoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )    
 
+#------For News Feed API---------
 class FeedView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
