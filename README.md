@@ -223,8 +223,8 @@ flowchart TD
     ACTION --> GP["GET /posts/{id}/"]
     GP --> GPC{Post Exists?}
     GPC -->|No| ERR404A["404 Not Found"]
-    GPC -->|Yes| ADDCOUNT[Add like_count and comment_count]
-    ADDCOUNT --> RES200A["200 OK Return Post JSON"]
+    GPC -->|Yes| SUCCESSPOST["200 OK Successfully Retrieved Post
+    Includes like_count and comment_count"]
 
     %% ================= LIKE POST =================
 
