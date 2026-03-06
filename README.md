@@ -284,7 +284,6 @@ subgraph Server["Django Application Server 127.0.0.1:8000"]
         POST /posts/<br/>
         GET /posts/feed/<br/>
         GET /posts/:id/<br/>
-        DELETE /posts/:id/<br/><br/>
         COMMENTS:<br/>
         POST /posts/:id/comment/<br/>
         GET /posts/:id/comments/<br/><br/>
