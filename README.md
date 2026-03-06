@@ -196,30 +196,67 @@ erDiagram
 
 ```mermaid
 flowchart TD
-    A[User Registers] --> B[User Logs In]
-    B --> C[API Returns Auth Token]
 
-    C --> D[Create Post]
-    D --> E[Post Stored in Database]
+    START[Client Sends HTTP Request] --> AUTH{Has Auth Token?}
 
-    C --> F[Like Post]
-    F --> G{Already Liked?}
-    G -->|No| H[Save Like]
-    G -->|Yes| I[Return 400 Error]
+    %% ================= AUTH =================
 
-    C --> J[Comment on Post]
-    J --> K{Post Exists?}
-    K -->|Yes| L[Save Comment]
-    K -->|No| M[Return 400 Error]
+    AUTH -->|No| LOGIN["POST /auth/login/"]
+    LOGIN --> VALID{Valid Credentials?}
+    VALID -->|No| ERR401["401 Unauthorized"]
+    VALID -->|Yes| TOKEN["Return DRF Token"]
 
-    C --> O[GET /posts/feed/]
-    O --> P[Sort by -created_at]
-    P --> Q[Apply Pagination]
-    Q --> R[Return Paginated Feed]
+    AUTH -->|Yes| ACTION
+    TOKEN --> ACTION{Select API Endpoint}
 
-    E --> R
-    H --> R
-    L --> R
+    %% ================= CREATE POST =================
+
+    ACTION --> CP["POST /posts/"]
+    CP --> CPV[Validate post_type and metadata]
+    CPV -->|Invalid| ERR400A["400 Bad Request"]
+    CPV -->|Valid| FACTORY[PostFactory Creates Post]
+    FACTORY --> SAVEPOST[Save Post to Database]
+    SAVEPOST --> RES201["201 Created"]
+
+    %% ================= GET SINGLE POST =================
+
+    ACTION --> GP["GET /posts/{id}/"]
+    GP --> GPC{Post Exists?}
+    GPC -->|No| ERR404A["404 Not Found"]
+    GPC -->|Yes| ADDCOUNT[Add like_count and comment_count]
+    ADDCOUNT --> RES200A["200 OK Return Post JSON"]
+
+    %% ================= LIKE POST =================
+
+    ACTION --> LP["POST /posts/{id}/like/"]
+    LP --> LPC{Post Exists?}
+    LPC -->|No| ERR404B["404 Not Found"]
+    LPC -->|Yes| DUP{Already Liked?}
+    DUP -->|Yes| ERR400B["400 Already Liked"]
+    DUP -->|No| SAVELIKE[Save Like]
+    SAVELIKE --> RES201B["201 Created"]
+
+    %% ================= COMMENT POST =================
+
+    ACTION --> CM["POST /posts/{id}/comment/"]
+    CM --> CMC{Post Exists?}
+    CMC -->|No| ERR400C["400 Invalid Post"]
+    CMC -->|Yes| VALIDC[Validate Comment Data]
+    VALIDC -->|Invalid| ERR400D["400 Bad Request"]
+    VALIDC -->|Valid| SAVECOM[Save Comment]
+    SAVECOM --> RES201C["201 Created"]
+
+    %% ================= GET COMMENTS =================
+
+    ACTION --> GC["GET /posts/{id}/comments/"]
+    GC --> RES200B["200 OK Return Comment List"]
+
+    %% ================= FEED =================
+
+    ACTION --> FEED["GET /posts/feed/"]
+    FEED --> SORT[Order by -created_at]
+    SORT --> PAGINATE[Apply PageNumberPagination]
+    PAGINATE --> RES200C["200 OK Paginated Feed"]
 ```
 
 ## 3. System Architecture Diagram
