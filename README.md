@@ -272,7 +272,7 @@ flowchart TD
     CP --> CPV[Validate post_type and metadata]
     CPV -->|Invalid| ERR400A["400 Bad Request"]
     CPV -->|Valid| FACTORY[PostFactory Creates Post]
-    FACTORY --> SAVEPOST[Save Post with Privacy Field]
+    FACTORY --> SAVEPOST[Save Post to Database]
     SAVEPOST --> RES201["201 Created"]
 
     %% ================= GET SINGLE POST =================
@@ -280,20 +280,7 @@ flowchart TD
     ACTION --> GP["GET /posts/{id}/"]
     GP --> GPC{Post Exists?}
     GPC -->|No| ERR404A["404 Not Found"]
-    GPC -->|Yes| PRIV{Is Post Private?}
-    PRIV -->|No| SUCCESSPOST["200 OK Return Post"]
-    PRIV -->|Yes| OWNER{Is Request User Owner?}
-    OWNER -->|No| ERR403P["403 Private Post"]
-    OWNER -->|Yes| SUCCESSPOST
-
-    %% ================= DELETE POST (RBAC) =================
-
-    ACTION --> DEL["DELETE /posts/{id}/"]
-    DEL --> EXISTS{Post Exists?}
-    EXISTS -->|No| ERR404D["404 Not Found"]
-    EXISTS -->|Yes| ROLE{Is User Admin?}
-    ROLE -->|No| ERR403R["403 Only Admin Users"]
-    ROLE -->|Yes| RES204["204 No Content Deleted"]
+    GPC -->|Yes| SUCCESSPOST["200 OK Return Post"]
 
     %% ================= LIKE POST =================
 
@@ -315,13 +302,19 @@ flowchart TD
     VALIDC -->|Valid| SAVECOM[Save Comment]
     SAVECOM --> RES201C["201 Created"]
 
-    %% ================= FEED WITH PRIVACY =================
+    %% ================= FEED WITH PAGINATION + CACHING =================
 
     ACTION --> FEED["GET /posts/feed/"]
-    FEED --> FILTER[Filter Public Posts + User's Private Posts]
+
+    FEED --> CACHECHECK{Check Cache}
+
+    CACHECHECK -->|Cache Hit| RETURN200["200 OK Cached Response"]
+
+    CACHECHECK -->|Cache Miss| FILTER[Filter Public + User Private Posts]
     FILTER --> SORT[Order by -created_at]
     SORT --> PAGINATE[Apply PageNumberPagination]
-    PAGINATE --> RES200C["200 OK Paginated Feed"]
+    PAGINATE --> CACHESET[Store Result in Cache - 60 seconds]
+    CACHESET --> RETURN200F["200 OK Paginated Feed"]
 ```
 
 ## 3. System Architecture Diagram
@@ -368,8 +361,13 @@ subgraph Server["Django Application Server 127.0.0.1:8000"]
     subgraph Processing["Data Processing"]
         Serializers["Serializers<br/>posts/serializers.py"]
         Factory["PostFactory - Factory Pattern"]
-        Pagination["PageNumberPagination"]
         Sorting["order_by -created_at"]
+        Pagination["PageNumberPagination (Performance Optimization)"]
+    end
+
+    %% CACHE LAYER (NEW)
+    subgraph Cache["Caching Layer (NEW)"]
+        CacheSystem["Django Cache Framework<br/>LocMemCache (60s Timeout)"]
     end
 
     %% MODELS
@@ -392,13 +390,18 @@ end
 
 
 %% ================= FLOW =================
-ClientApp -->|HTTP Request to 127.0.0.1:8000| Router
+ClientApp -->|HTTP Request| Router
 Router --> Endpoints
 Endpoints --> Views
 
 Views -->|Authenticate Token| TokenAuth
 Views -->|Permission Check| PermissionCheck
 Views -->|Google Login Flow| GoogleOAuth
+
+%% PERFORMANCE FLOW
+Views -->|Check Cache| CacheSystem
+CacheSystem -->|Cache Hit| ClientApp
+CacheSystem -->|Cache Miss| ModelLayer
 
 Views -->|Validate Data| Serializers
 Views -->|Create Post via Factory Pattern| Factory
@@ -420,6 +423,7 @@ style Client fill:#e3f2fd,stroke:#1e88e5,stroke-width:2px
 style API fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px
 style Auth fill:#fff3e0,stroke:#fb8c00,stroke-width:2px
 style Processing fill:#e8f5e9,stroke:#43a047,stroke-width:2px
+style Cache fill:#fff8e1,stroke:#f9a825,stroke-width:2px
 style Models fill:#fce4ec,stroke:#d81b60,stroke-width:2px
 style Utils fill:#f1f8e9,stroke:#7cb342,stroke-width:2px
 style Storage fill:#ede7f6,stroke:#5e35b1,stroke-width:2px
