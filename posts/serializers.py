@@ -64,6 +64,7 @@ class PostSerializer(serializers.ModelSerializer):
             'content',
             'post_type',
             'metadata',
+            'privacy',
             'author',
             'created_at',
             'likes',

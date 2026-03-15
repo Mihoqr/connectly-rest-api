@@ -15,7 +15,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token 
 from rest_framework.permissions import IsAuthenticated, BasePermission, AllowAny 
 
-# Imports
+# Imports for likes 
 from .models import Post, Comment, Like
 from .serializers import UserSerializer, PostSerializer, CommentSerializer
 
@@ -28,6 +28,12 @@ from google.auth.transport import requests as google_requests
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
+#FOR RBAC 
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from rest_framework import status 
+from .models import Post, UserProfile
+
 
 # Initialize Singleton Logger
 logger = LoggerSingleton().get_logger() 
@@ -35,7 +41,7 @@ logger = LoggerSingleton().get_logger()
 # --- INTERNAL FACTORY CLASS ---
 class PostFactory:
     @staticmethod
-    def create_post(post_type, title, author, content='', metadata=None):
+    def create_post(post_type, title, author, content='', metadata=None, privacy='public'):
         # Sine-check nito kung valid ang post_type base sa choices sa models.py
         if post_type not in dict(Post.POST_TYPES):
             raise ValueError("Invalid post type")
@@ -52,7 +58,8 @@ class PostFactory:
             author=author,
             content=content,
             post_type=post_type,
-            metadata=metadata or {}
+            metadata=metadata or {},
+            privacy=privacy
         )
 
 # --- CUSTOM PERMISSION --- 
@@ -117,27 +124,33 @@ class PostListCreate(APIView):
 
     def post(self, request):
         data = request.data
-        logger.info(f"Attempting to create a post: {data.get('title')}") 
+        logger.info(f"Attempting to create a post: {data.get('title')}")
+        print("DEBUG PRIVACY VALUE:", data.get('privacy'))
 
         try:
-            # I-pinasa natin ang request.user (ang logged-in user) sa Factory
             post = PostFactory.create_post(
                 post_type=data.get('post_type'),
                 title=data.get('title'),
-                author=request.user, 
+                author=request.user,
                 content=data.get('content', ""),
-                metadata=data.get('metadata', {})
+                metadata=data.get('metadata', {}),
+                privacy=data.get('privacy', 'public')
             )
-            
-            logger.info(f"Post created successfully with ID: {post.id}") 
-            return Response(
-                {"message": "Post created successfully!", "post_id": post.id}, 
-                status=status.HTTP_201_CREATED
-            ) 
 
-        except ValueError as e:
-            logger.error(f"Post creation failed: {str(e)}")
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST) 
+            logger.info(f"Post created successfully with ID: {post.id}")
+
+            return Response(
+                {"message": "Post created successfully!", "post_id": post.id},
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception as e:
+            print("ERROR:", str(e))
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
 
 # --- UPDATED DETAIL VIEW --- 
 class PostDetailView(APIView):
@@ -145,33 +158,36 @@ class PostDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
-        try:
-            post = Post.objects.get(pk=pk)
-        except Post.DoesNotExist:
+        post = get_object_or_404(Post, pk=pk)
+
+        if post.privacy == 'private' and post.author != request.user:
             return Response(
-                {"error": "Post not found."},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "This post is private."},
+                status=403
             )
 
         serializer = PostSerializer(post)
         data = serializer.data
-
-        # 🔥 Add these two lines
         data["like_count"] = Like.objects.filter(post=post).count()
         data["comment_count"] = Comment.objects.filter(post=post).count()
 
         return Response(data)
 
     def delete(self, request, pk):
-        post = self.get_object(pk)
-        if post is None:
-            return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        self.check_object_permissions(request, post)
-        logger.info(f"Post ID {pk} deleted by user {request.user.username}")
-        post.delete()
-        return Response({"message": "Post deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
+        post = get_object_or_404(Post, pk=pk)
+        profile = UserProfile.objects.get(user=request.user)
 
+        if profile.role != "admin":
+            return Response(
+                {"error": "Only admin users can delete posts."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        post.delete()
+        return Response(
+            {"message": "Post deleted successfully!"},
+            status=status.HTTP_204_NO_CONTENT
+        )
 # --- UPDATED COMMENT VIEW ---@method_decorator(csrf_exempt, name='dispatch')
 class CommentListCreate(APIView):
     authentication_classes = [TokenAuthentication]
@@ -271,7 +287,10 @@ class FeedView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        posts = Post.objects.all().order_by('-created_at')
+        
+        posts = Post.objects.filter(
+            Q(privacy='public') | Q(author=request.user)
+        ).order_by('-created_at')
 
         paginator = PageNumberPagination()
         paginator.page_size = 5

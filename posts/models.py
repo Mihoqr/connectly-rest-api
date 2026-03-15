@@ -18,6 +18,17 @@ class Post(models.Model):
 
     def __str__(self):
         return f"{self.title} by {self.author.username}"
+    
+    PRIVACY_CHOICES = (
+            ('public', 'Public'),
+            ('private', 'Private'),
+        )
+
+    privacy = models.CharField(
+            max_length=10,
+            choices=PRIVACY_CHOICES,
+            default='public'
+        )
 
 class Comment(models.Model):
     text = models.TextField()
@@ -40,3 +51,24 @@ class Like(models.Model):
 
     def __str__(self):
         return f"{self.user.username} liked Post {self.post.id}"
+
+#FOR RBAC 
+class UserProfile(models.Model):
+    ROLE_CHOICES = (
+        ('admin', 'Admin'),
+        ('user', 'User'),
+        ('guest', 'Guest'),
+    )
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    role = models.CharField(
+        max_length=10,
+        choices=ROLE_CHOICES,
+        default='user'
+    )
+
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"
+
+
+  
