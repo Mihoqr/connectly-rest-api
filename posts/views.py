@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User 
 from django.contrib.auth import authenticate 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.generics import ListAPIView
 from rest_framework import generics
 from rest_framework.pagination import PageNumberPagination
 
@@ -33,6 +34,11 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from rest_framework import status 
 from .models import Post, UserProfile
+
+#For Caching 
+from django.core.cache import cache
+
+
 
 
 # Initialize Singleton Logger
@@ -287,15 +293,26 @@ class FeedView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        
+
+        cache_key = f"feed_user_{request.user.id}_page_{request.GET.get('page', 1)}"
+
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            print("CACHE HIT")
+            return Response(cached_data)
+
+        print("CACHE MISS")
+
         posts = Post.objects.filter(
             Q(privacy='public') | Q(author=request.user)
         ).order_by('-created_at')
 
         paginator = PageNumberPagination()
-        paginator.page_size = 5
-
         result_page = paginator.paginate_queryset(posts, request)
         serializer = PostSerializer(result_page, many=True)
 
-        return paginator.get_paginated_response(serializer.data)  
+        response_data = paginator.get_paginated_response(serializer.data).data
+
+        cache.set(cache_key, response_data, timeout=60)
+
+        return Response(response_data)
