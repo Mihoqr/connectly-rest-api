@@ -133,45 +133,102 @@ AI tools (including ChatGPT) were used as a learning assistant to:
 ## 1. Entity Relationship Diagram
 ```mermaid
 erDiagram
+
     USER ||--o{ POST : creates
+
     USER ||--o{ COMMENT : writes
+
     USER ||--o{ LIKE : gives
+
+    USER ||--|| USERPROFILE : has
+
     POST ||--o{ COMMENT : receives
+
     POST ||--o{ LIKE : receives
 
+
+
     USER {
+
         int id PK
+
         string username UK
+
         string email UK
+
         string password
+
         datetime date_joined
+
     }
+
+
+
+    USERPROFILE {
+
+        int id PK
+
+        int user_id FK
+
+        string role
+
+    }
+
+
 
     POST {
+
         int id PK
+
         string title
+
         text content
+
         string post_type
+
+        string privacy
+
         json metadata
+
         int author_id FK
+
         datetime created_at
+
     }
+
+
 
     COMMENT {
+
         int id PK
+
         text text
+
         int author_id FK
+
         int post_id FK
+
         datetime created_at
+
     }
 
+
+
     LIKE {
+
         int id PK
+
         int user_id FK
+
         int post_id FK
+
         datetime created_at
+
         string unique_constraint "user_id, post_id"
+
     }
+
+
 ```
 ### 1.1  Entity to API Endpoint Mapping
 ### USER
@@ -215,7 +272,7 @@ flowchart TD
     CP --> CPV[Validate post_type and metadata]
     CPV -->|Invalid| ERR400A["400 Bad Request"]
     CPV -->|Valid| FACTORY[PostFactory Creates Post]
-    FACTORY --> SAVEPOST[Save Post to Database]
+    FACTORY --> SAVEPOST[Save Post with Privacy Field]
     SAVEPOST --> RES201["201 Created"]
 
     %% ================= GET SINGLE POST =================
@@ -223,8 +280,20 @@ flowchart TD
     ACTION --> GP["GET /posts/{id}/"]
     GP --> GPC{Post Exists?}
     GPC -->|No| ERR404A["404 Not Found"]
-    GPC -->|Yes| SUCCESSPOST["200 OK Successfully Retrieved Post
-    Includes like_count and comment_count"]
+    GPC -->|Yes| PRIV{Is Post Private?}
+    PRIV -->|No| SUCCESSPOST["200 OK Return Post"]
+    PRIV -->|Yes| OWNER{Is Request User Owner?}
+    OWNER -->|No| ERR403P["403 Private Post"]
+    OWNER -->|Yes| SUCCESSPOST
+
+    %% ================= DELETE POST (RBAC) =================
+
+    ACTION --> DEL["DELETE /posts/{id}/"]
+    DEL --> EXISTS{Post Exists?}
+    EXISTS -->|No| ERR404D["404 Not Found"]
+    EXISTS -->|Yes| ROLE{Is User Admin?}
+    ROLE -->|No| ERR403R["403 Only Admin Users"]
+    ROLE -->|Yes| RES204["204 No Content Deleted"]
 
     %% ================= LIKE POST =================
 
@@ -246,15 +315,11 @@ flowchart TD
     VALIDC -->|Valid| SAVECOM[Save Comment]
     SAVECOM --> RES201C["201 Created"]
 
-    %% ================= GET COMMENTS =================
-
-    ACTION --> GC["GET /posts/{id}/comments/"]
-    GC --> RES200B["200 OK Return Comment List"]
-
-    %% ================= FEED =================
+    %% ================= FEED WITH PRIVACY =================
 
     ACTION --> FEED["GET /posts/feed/"]
-    FEED --> SORT[Order by -created_at]
+    FEED --> FILTER[Filter Public Posts + User's Private Posts]
+    FILTER --> SORT[Order by -created_at]
     SORT --> PAGINATE[Apply PageNumberPagination]
     PAGINATE --> RES200C["200 OK Paginated Feed"]
 ```
