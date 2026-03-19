@@ -525,6 +525,39 @@ sequenceDiagram
     end
 ```
 
+## 6. Access Control Flow Diagram 
+
+```
+flowchart TD
+
+A[Client Request] --> B{Authentication Required}
+
+B -->|Login Endpoint| C[Process Login and Return Token]
+
+B -->|Protected Endpoint| D[Token Authentication]
+
+D -->|Invalid Token| E[401 Unauthorized]
+D -->|Valid Token| F[Retrieve User and UserProfile]
+
+F --> G{Request Type}
+
+%% FEED
+G -->|GET Feed| H[Filter Posts where privacy is public OR author is current user]
+H --> I[Return Filtered Posts 200 OK]
+
+%% SINGLE POST
+G -->|GET Single Post| J{Is Post Private}
+J -->|No| K[Return Post 200 OK]
+J -->|Yes| L{Is Requesting User the Owner}
+L -->|Yes| K
+L -->|No| M[403 Forbidden]
+
+%% DELETE POST
+G -->|DELETE Post| N{Is User Role Admin}
+N -->|Yes| O[Delete Post 204 No Content]
+N -->|No| P[403 Forbidden]
+```
+
 
 ## Setup Instructions
 
