@@ -129,6 +129,16 @@ class PostListCreate(APIView):
         return Response(serializer.data)
 
     def post(self, request):
+
+        # RBAC CHECK
+        profile = UserProfile.objects.get(user=request.user)
+
+        if profile.role == "guest":
+            return Response(
+                {"error": "Guests cannot create posts."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         data = request.data
         logger.info(f"Attempting to create a post: {data.get('title')}")
         print("DEBUG PRIVACY VALUE:", data.get('privacy'))
@@ -316,3 +326,5 @@ class FeedView(APIView):
         cache.set(cache_key, response_data, timeout=60)
 
         return Response(response_data)
+    
+    
