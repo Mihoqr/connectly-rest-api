@@ -571,28 +571,91 @@ sequenceDiagram
 ```mermaid
 flowchart TD
 
-A[Client Request] --> B{Authentication Required}
+A[Client Request] --> B{Login Endpoint?}
 
-B -->|Login Endpoint| C[Process Login and Return Token]
-B -->|Protected Endpoint| D[Token Authentication]
+%% LOGIN FLOW
+B -->|POST /posts/login/| C[Validate Credentials]
+C -->|Valid| D[Return 200 + Token]
+C -->|Invalid| E[Return 401 Unauthorized]
 
-D -->|Invalid Token| E[401 Unauthorized]
-D -->|Valid Token| F[Retrieve User and UserProfile]
+%% PROTECTED ENDPOINT
+B -->|Other Endpoint| F[TokenAuthentication + IsAuthenticated]
 
-F --> G{Request Type}
+F -->|Invalid Token| G[Return 401 Unauthorized]
+F -->|Valid Token| H[Retrieve UserProfile]
 
-G -->|GET Feed| H[Filter Posts where privacy is public OR author is current user]
-H --> I[Return Filtered Posts 200 OK]
+H --> I{User Role}
 
-G -->|GET Single Post| J{Is Post Private}
-J -->|No| K[Return Post 200 OK]
-J -->|Yes| L{Is Requesting User the Owner}
-L -->|Yes| K
-L -->|No| M[403 Forbidden]
+%% ================= ADMIN =================
+I -->|Admin| J[Admin Request Processing]
 
-G -->|DELETE Post| N{Is User Role Admin}
-N -->|Yes| O[Delete Post 204 No Content]
-N -->|No| P[403 Forbidden]
+J --> J1{Request Type}
+
+J1 -->|POST /posts/| J2[Return 201 Created]
+
+J1 -->|DELETE /posts/:id/| J3[Return 204 No Content]
+
+J1 -->|POST /posts/:id/like/| J4{Already Liked?}
+J4 -->|No| J5[Return 201 Created]
+J4 -->|Yes| J6[Return 400 Bad Request]
+
+J1 -->|POST /posts/:id/comment/| J7[Return 201 Created]
+
+J1 -->|GET /posts/feed/| J8[Filter Public OR Own Posts]
+J8 --> J9[Apply Pagination + Cache]
+J9 --> J10[Return 200 OK]
+
+J1 -->|GET /posts/:id/| J11{Is Post Private?}
+J11 -->|No| J12[Return 200 OK]
+J11 -->|Yes and Owner| J12
+J11 -->|Yes and Not Owner| J13[Return 403 Forbidden]
+
+%% ================= USER =================
+I -->|User| K[User Request Processing]
+
+K --> K1{Request Type}
+
+K1 -->|POST /posts/| K2[Return 201 Created]
+
+K1 -->|DELETE /posts/:id/| K3[Return 403 Forbidden]
+
+K1 -->|POST /posts/:id/like/| K4{Already Liked?}
+K4 -->|No| K5[Return 201 Created]
+K4 -->|Yes| K6[Return 400 Bad Request]
+
+K1 -->|POST /posts/:id/comment/| K7[Return 201 Created]
+
+K1 -->|GET /posts/feed/| K8[Filter Public OR Own Posts]
+K8 --> K9[Apply Pagination + Cache]
+K9 --> K10[Return 200 OK]
+
+K1 -->|GET /posts/:id/| K11{Is Post Private?}
+K11 -->|No| K12[Return 200 OK]
+K11 -->|Yes and Owner| K12
+K11 -->|Yes and Not Owner| K13[Return 403 Forbidden]
+
+%% ================= GUEST =================
+I -->|Guest| L[Guest Request Processing]
+
+L --> L1{Request Type}
+
+L1 -->|POST /posts/| L2[Return 403 Forbidden]
+
+L1 -->|DELETE /posts/:id/| L3[Return 403 Forbidden]
+
+L1 -->|POST /posts/:id/like/| L4{Already Liked?}
+L4 -->|No| L5[Return 201 Created]
+L4 -->|Yes| L6[Return 400 Bad Request]
+
+L1 -->|POST /posts/:id/comment/| L7[Return 201 Created]
+
+L1 -->|GET /posts/feed/| L8[Filter Public Posts Only]
+L8 --> L9[Apply Pagination + Cache]
+L9 --> L10[Return 200 OK]
+
+L1 -->|GET /posts/:id/| L11{Is Post Private?}
+L11 -->|No| L12[Return 200 OK]
+L11 -->|Yes| L13[Return 403 Forbidden]
 ```
 
 
