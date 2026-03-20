@@ -263,13 +263,25 @@ flowchart TD
     VALID -->|No| ERR401["401 Unauthorized"]
     VALID -->|Yes| TOKEN["Return DRF Token"]
 
-    AUTH -->|Yes| ACTION
-    TOKEN --> ACTION{Select API Endpoint}
+    AUTH -->|Yes| ROLECHECK
+    TOKEN --> ROLECHECK{Determine User Role}
+
+    ROLECHECK -->|Admin| ACTION
+    ROLECHECK -->|User| ACTION
+    ROLECHECK -->|Guest| ACTION
+
+    ACTION{Select API Endpoint}
 
     %% ================= CREATE POST =================
 
     ACTION --> CP["POST /posts/"]
-    CP --> CPV[Validate post_type and metadata]
+    CP --> ROLECREATE{User Role?}
+
+    ROLECREATE -->|Admin| CPV
+    ROLECREATE -->|User| CPV
+    ROLECREATE -->|Guest| ERR403A["403 Forbidden"]
+
+    CPV{Valid post_type and metadata?}
     CPV -->|Invalid| ERR400A["400 Bad Request"]
     CPV -->|Valid| FACTORY[PostFactory Creates Post]
     FACTORY --> SAVEPOST[Save Post to Database]
@@ -280,14 +292,34 @@ flowchart TD
     ACTION --> GP["GET /posts/{id}/"]
     GP --> GPC{Post Exists?}
     GPC -->|No| ERR404A["404 Not Found"]
-    GPC -->|Yes| SUCCESSPOST["200 OK Return Post"]
+    GPC -->|Yes| PRIV{Is Post Private?}
+
+    PRIV -->|No| SUCCESSPOST["200 OK Return Post"]
+    PRIV -->|Yes| OWNER{Is Owner?}
+    OWNER -->|Yes| SUCCESSPOST
+    OWNER -->|No| ERR403B["403 Forbidden"]
+
+    %% ================= DELETE POST =================
+
+    ACTION --> DP["DELETE /posts/{id}/"]
+    DP --> DPE{Post Exists?}
+    DPE -->|No| ERR404B["404 Not Found"]
+    DPE -->|Yes| ROLEDELETE{User Role?}
+
+    ROLEDELETE -->|Admin| DELETEPOST
+    ROLEDELETE -->|User| ERR403C["403 Forbidden"]
+    ROLEDELETE -->|Guest| ERR403C
+
+    DELETEPOST[Delete Post from DB]
+    DELETEPOST --> RES204["204 No Content"]
 
     %% ================= LIKE POST =================
 
     ACTION --> LP["POST /posts/{id}/like/"]
     LP --> LPC{Post Exists?}
-    LPC -->|No| ERR404B["404 Not Found"]
+    LPC -->|No| ERR404C["404 Not Found"]
     LPC -->|Yes| DUP{Already Liked?}
+
     DUP -->|Yes| ERR400B["400 Already Liked"]
     DUP -->|No| SAVELIKE[Save Like]
     SAVELIKE --> RES201B["201 Created"]
@@ -297,7 +329,8 @@ flowchart TD
     ACTION --> CM["POST /posts/{id}/comment/"]
     CM --> CMC{Post Exists?}
     CMC -->|No| ERR400C["400 Invalid Post"]
-    CMC -->|Yes| VALIDC[Validate Comment Data]
+    CMC -->|Yes| VALIDC{Valid Comment Data?}
+
     VALIDC -->|Invalid| ERR400D["400 Bad Request"]
     VALIDC -->|Valid| SAVECOM[Save Comment]
     SAVECOM --> RES201C["201 Created"]
@@ -305,15 +338,14 @@ flowchart TD
     %% ================= FEED WITH PAGINATION + CACHING =================
 
     ACTION --> FEED["GET /posts/feed/"]
-
-    FEED --> CACHECHECK{Check Cache}
+    FEED --> CACHECHECK{Cache Available?}
 
     CACHECHECK -->|Cache Hit| RETURN200["200 OK Cached Response"]
 
-    CACHECHECK -->|Cache Miss| FILTER[Filter Public + User Private Posts]
+    CACHECHECK -->|Cache Miss| FILTER[Filter Public and Own Private Posts]
     FILTER --> SORT[Order by -created_at]
     SORT --> PAGINATE[Apply PageNumberPagination]
-    PAGINATE --> CACHESET[Store Result in Cache - 60 seconds]
+    PAGINATE --> CACHESET[Store Result in Cache 60 seconds]
     CACHESET --> RETURN200F["200 OK Paginated Feed"]
 ```
 
