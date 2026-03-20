@@ -342,6 +342,7 @@ subgraph Server["Django Application Server 127.0.0.1:8000"]
         POST /posts/<br/>
         GET /posts/feed/<br/>
         GET /posts/:id/<br/>
+        DELETE /posts/:id/<br/>
         COMMENTS:<br/>
         POST /posts/:id/comment/<br/>
         GET /posts/:id/comments/<br/><br/>
@@ -355,6 +356,7 @@ subgraph Server["Django Application Server 127.0.0.1:8000"]
         TokenAuth["TokenAuthentication"]
         PermissionCheck["IsAuthenticated"]
         GoogleOAuth["Google OAuth Verification<br/>google-auth library"]
+        RoleCheck["Role Checking (Admin / User / Guest)"]
     end
 
     %% PROCESSING
@@ -363,16 +365,17 @@ subgraph Server["Django Application Server 127.0.0.1:8000"]
         Factory["PostFactory - Factory Pattern"]
         Sorting["order_by -created_at"]
         Pagination["PageNumberPagination (Performance Optimization)"]
+        PrivacyCheck["Privacy Enforcement (Public / Private Post Logic)"]
     end
 
-    %% CACHE LAYER (NEW)
+    %% CACHE LAYER
     subgraph Cache["Caching Layer (NEW)"]
         CacheSystem["Django Cache Framework<br/>LocMemCache (60s Timeout)"]
     end
 
     %% MODELS
     subgraph Models["Data Models"]
-        ModelLayer["User, Post, Comment, Like<br/>posts/models.py"]
+        ModelLayer["User, UserProfile (RBAC), Post, Comment, Like<br/>posts/models.py"]
     end
 
     %% UTILITIES
@@ -396,7 +399,13 @@ Endpoints --> Views
 
 Views -->|Authenticate Token| TokenAuth
 Views -->|Permission Check| PermissionCheck
+Views -->|Determine Role| RoleCheck
 Views -->|Google Login Flow| GoogleOAuth
+
+%% PRIVACY + RBAC FLOW
+Views -->|Enforce Privacy Rules| PrivacyCheck
+PrivacyCheck --> ModelLayer
+RoleCheck --> ModelLayer
 
 %% PERFORMANCE FLOW
 Views -->|Check Cache| CacheSystem
