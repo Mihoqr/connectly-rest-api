@@ -1,4 +1,4 @@
-# Connectly REST API - Milestone 1 and Milestone 2 (Full Implementation)
+# Connectly REST API - Milestone 1, Milestone 2, and Terminal Assessment (Full Implementation)
 
 This repository contains the complete implementation of Milestone 1 and Milestone 2 for the Connectly REST API. The project has been evolved from a basic CRUD setup to a secure, pattern-driven system designed for scalability and maintainability.
 
@@ -117,6 +117,57 @@ The API has been fully verified using Postman with the following test suite:
 	•	Client secrets are not stored in the repository.
 	•	Google OAuth credentials are managed securely in Google Cloud Console.
 	•	Sensitive information is excluded from version control.
+
+
+## Terminal Assessment – Homework 8 and 9
+
+This milestone enhances the Connectly REST API by implementing privacy controls, role-based access control (RBAC), pagination, and caching to improve system security and performance.
+
+### Homework 8 – Privacy Settings and RBAC
+
+A `privacy` field was added to the `Post` model with two values: `public` and `private`, with `public` as the default. This allows users to control the visibility of their posts.
+
+Privacy is enforced in the view layer:
+
+- **GET /posts/feed/** returns only public posts and the requesting user’s own private posts.
+- **GET /posts/{id}/** checks whether a post is private and whether the requester is the owner. If a user attempts to access another user’s private post, the API returns `403 Forbidden`.
+
+For role-based access control, a separate `UserProfile` model was created and linked to Django’s built-in `User` model using a OneToOne relationship. The model includes a `role` field with three options: `admin`, `user`, and `guest`.
+
+In the current implementation:
+
+- **Admin** can create, view, like, comment on, and delete posts.
+- **User** can create, view, like, and comment on posts but cannot delete them.
+- **Guest** can view, like, and comment on posts but cannot create or delete them.
+
+RBAC is enforced in the view logic. Sensitive operations such as post deletion check the user’s role before execution. Unauthorized role attempts return `403 Forbidden`.
+
+### Homework 9 – Performance Optimization
+
+Pagination was implemented in the feed endpoint using Django REST Framework’s `PageNumberPagination`. Users can access additional pages using query parameters such as:
+
+`GET /posts/feed/?page=2`
+
+This limits the number of records returned per request and improves scalability.
+
+Caching was implemented in the `FeedView` using Django’s built-in cache framework. A unique cache key is generated using the requesting user’s ID and the page number.
+
+When the feed endpoint is called:
+
+1. The system checks whether a cached response exists.
+2. If it exists, the cached data is returned immediately.
+3. If not, the database is queried, the results are paginated, stored in cache for 60 seconds, and then returned.
+
+This reduces repeated database queries and improves response time for frequently accessed endpoints.
+
+### Testing
+
+Testing was conducted using Postman to validate:
+
+- Privacy enforcement
+- Role-based access restrictions
+- Pagination behavior
+- Cache hit and miss functionality
 
 This project was developed collaboratively by the team.
 
