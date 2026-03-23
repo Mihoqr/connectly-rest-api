@@ -10,7 +10,7 @@ urlpatterns = [
 
     # SPECIFIC ROUTES
     path('<int:pk>/like/', LikePostView.as_view(), name='post-like'),
-    path('<int:pk>/comment/', CommentListCreate.as_view(), name='post-comment')
+    path('<int:pk>/comment/', CommentListCreate.as_view(), name='post-comment'),
     
 
     # DETAIL ROUTE
